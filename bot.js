@@ -7,6 +7,7 @@ const Iota = require('@iota/core');
 const Telegraf = require('telegraf');
 const trustify = require('@trustify/tipbot.ts');
 var TinyURL = require('tinyurl');
+const Telegram = require('telegraf/telegram')
 
 
 const BOT_TOKEN = process.env.BOT_TOKEN
@@ -18,6 +19,9 @@ const DB_NAME = process.env.DB_NAME
 
 
 const bot = new Telegraf(BOT_TOKEN)
+const telegram = new Telegram(BOT_TOKEN, {})
+
+
 trustify.setDB(`postgresql://${DB_USER}:${DB_PASSWORD}@${DB_URL}:${DB_PORT}/${DB_NAME}`)
 
 
@@ -32,7 +36,7 @@ bot.command('add', (ctx) => {
    ctx.reply('Enter a valid IOTA adress to receive your tips:')
    bot.on('message', (ctx) => {
       if ('message') {
-         let user = ctx.message.from.id
+         let user = ctx.message.from.username
          let address = ctx.message.text
          let response = trustify.add(user, address)
          return ctx.reply(response)
@@ -45,20 +49,32 @@ bot.command('add', (ctx) => {
 })
 
 bot.command('tip', async (ctx) => {
-   let user = ctx.message.from.id
+   if(!ctx.message.entities[1]) {
+      ctx.reply("Usage with /tip @username")
+      return
+   }
+   if(!ctx.message.entities[1].type == "mention") {
+      ctx.reply("Usage with /tip @user_name")
+      return
+   }
+   // Example text: '/tip @Neupi'
+   let text = ctx.message.text
+   let offset = ctx.message.entities[1].offset
+   let length = ctx.message.entities[1].length
+   // offset + 1 removes the "@"
+   var user = text.substring(offset + 1, offset + length);
+   console.log("user", user)
+
    trustify.tip(user).then((response) => {
-      console.log("ctx.message.from", ctx.message.from)
+      console.log("ctx.message.from", ctx.message)
       if (response) {
 
          TinyURL.shorten(`iota://${response}/$amout=1&message=Trustify_tip`).then(function (res) {
-            // ctx.reply(res)
-
-            ctx.reply(`<b>Tip to ${ctx.message.from.first_name}:</b>`, Extra.HTML().markup((m) =>
+            ctx.reply(`Tip to ${user}!`)
+            ctx.reply(`${response}`, Extra.HTML().markup((m) =>
             m.inlineKeyboard([
-               m.callbackButton('Copy Address', 'copy_address'),
-               m.callbackButton('Shop QR Code', 'send_qr_code'),
+               m.callbackButton('Show QR Code', 'send_qr_code'),
                m.urlButton('Trinity', res),
-
             ])))
 
          // ctx.reply(`${response}`)
@@ -76,18 +92,16 @@ bot.command('tip', async (ctx) => {
    })
 })
 
-// bot.action(/.+/, (ctx) => {
-//    return ctx.answerCbQuery(`Adress copied to clipboard! ${ctx.match[0]}`)
-// })
-
-bot.action("copy_address", (ctx) => {
-   console.log("Address copied")
-   return ctx.answerCbQuery(`Address copied!`)
-})
 bot.action("send_qr_code", (ctx) => {
-   console.log("send_qr_code")
 
-   ctx.replyWithPhoto(`https://api.qrserver.com/v1/create-qr-code/?data=${"response"}%0A&size=142x142&margin=0`)
+   // this only works, because on the text is just the address
+   let address = ctx.update.callback_query.message.text
+
+   let user_id = ctx.update.callback_query.from.id
+
+   telegram.sendPhoto(user_id, `https://api.qrserver.com/v1/create-qr-code/?data=${address}%0A&size=142x142&margin=0`).then(res =>  {
+      console.log("sendMessage", res)
+   })
    
    return ctx.answerCbQuery(`send_qr_code`)
 })
@@ -98,6 +112,8 @@ bot.action("send_qr_code", (ctx) => {
 bot.on('sticker', (ctx) =>
    ctx.reply('👍'))
 
+   bot.on('mention', (ctx) =>
+   ctx.reply('👍'))
 
 //Greetings/////////////////
 
