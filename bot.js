@@ -87,7 +87,7 @@ bot.command('tip', async (ctx) => {
 
          
       } else {
-         ctx.reply("I haven´t an address for this user.")
+         ctx.reply(`@${user} didn't provide a IOTA address.`)
       }
    })
 })
