@@ -26,14 +26,14 @@ trustify.setDB(`postgresql://${DB_USER}:${DB_PASSWORD}@${DB_URL}:${DB_PORT}/${DB
 
 
 bot.start((ctx) =>
-   ctx.reply('Hi! I´m the IOTA TipBot Trustify! \r\nType /help to see a list of available commands. First you ned to set a valid donation adress with /add.'))
+   ctx.reply('Hi! I\'m the IOTA TipBot! \r\nType /help to see a list of available commands. First you ned to set a valid donation adress with /add.'))
 
 bot.help((ctx) =>
    ctx.reply('/help - some useful tips to this bot \r\n/add - set your IOTA receiving address \r\n/tip - tip to a User'))
 
 //Not ready yet
 bot.command('add', (ctx) => {
-   ctx.reply('Enter a valid IOTA adress to receive your tips:')
+   ctx.reply('Enter a valid IOTA address to receive your tips:')
    bot.on('message', (ctx) => {
       if ('message') {
          let user = ctx.message.from.username
@@ -43,7 +43,7 @@ bot.command('add', (ctx) => {
       }
 
       else ('message')
-      return ctx.reply('invalid IOTA Adress, please try Again!')
+      return ctx.reply('invalid IOTA address, please try again!')
 
    })
 })
@@ -87,7 +87,7 @@ bot.command('tip', async (ctx) => {
 
          
       } else {
-         ctx.reply("I haven´t an address for this user.")
+         ctx.reply(`@${user} didn't provide a IOTA address.`)
       }
    })
 })
