@@ -70,12 +70,13 @@ bot.command('tip', async (ctx) => {
       if (response) {
 
          TinyURL.shorten(`iota://${response}/$amout=1&message=Trustify_tip`).then(function (res) {
-            ctx.reply(`Tip to ${user}!`)
+            ctx.reply(`<b>Tip to ${user}:</b>`,Extra.HTML())
+            setTimeout(() =>  {
             ctx.reply(`${response}`, Extra.HTML().markup((m) =>
             m.inlineKeyboard([
                m.callbackButton('Show QR Code', 'send_qr_code'),
                m.urlButton('Trinity', res),
-            ])))
+            ])))},100);
 
          // ctx.reply(`${response}`)
 
@@ -83,7 +84,7 @@ bot.command('tip', async (ctx) => {
             ctx.reply(err)
          })
        
-         // ctx.replyWithPhoto(`https://api.qrserver.com/v1/create-qr-code/?data=${response}%0A&size=142x142&margin=0`)
+          //ctx.replyWithPhoto(`https://api.qrserver.com/v1/create-qr-code/?data=${response}%0A&size=142x142&margin=0`)
 
          
       } else {
@@ -99,7 +100,7 @@ bot.action("send_qr_code", (ctx) => {
 
    let user_id = ctx.update.callback_query.from.id
 
-   telegram.sendPhoto(user_id, `https://api.qrserver.com/v1/create-qr-code/?data=${address}%0A&size=142x142&margin=0`).then(res =>  {
+   telegram.sendPhoto(user_id, `https://api.qrserver.com/v1/create-qr-code/?data=${address}`).then(res =>  {
       console.log("sendMessage", res)
    })
    
