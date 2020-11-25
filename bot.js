@@ -22,31 +22,23 @@ const bot = new Telegraf(BOT_TOKEN)
 const telegram = new Telegram(BOT_TOKEN, {})
 
 
+
 trustify.setDB(`postgresql://${DB_USER}:${DB_PASSWORD}@${DB_URL}:${DB_PORT}/${DB_NAME}`)
 
 
 bot.start((ctx) =>
-   ctx.reply('Hi! I\'m the IOTA TipBot! \r\nType /help to see a list of available commands. First you ned to set a valid donation adress with /add.'))
+   ctx.reply('Hi! I\'m the IOTA TipBot! \r\nType /help to see a list of available commands. First you ned to set a valid donation adress with /add followed by your address.'))
 
 bot.help((ctx) =>
    ctx.reply('/help - some useful tips to this bot \r\n/add - set your IOTA receiving address \r\n/tip - tip to a User'))
 
-//Not ready yet
-bot.command('add', (ctx) => {
-   ctx.reply('Enter a valid IOTA address to receive your tips:')
-   bot.on('message', (ctx) => {
-      if ('message') {
-         let user = ctx.message.from.username
-         let address = ctx.message.text
-         let response = trustify.add(user, address)
-         return ctx.reply(response)
-      }
-
-      else ('message')
-      return ctx.reply('invalid IOTA address, please try again!')
-
-   })
+bot.command('add', async (ctx) => {
+   let user = ctx.message.from.username
+   let address = ctx.message.text.slice(5)
+   let response = trustify.add(user, address)
+   return ctx.reply(response)
 })
+
 
 bot.command('tip', async (ctx) => {
    if(!ctx.message.entities[1]) {
@@ -61,6 +53,7 @@ bot.command('tip', async (ctx) => {
    let text = ctx.message.text
    let offset = ctx.message.entities[1].offset
    let length = ctx.message.entities[1].length
+   
    // offset + 1 removes the "@"
    var user = text.substring(offset + 1, offset + length);
    console.log("user", user)
@@ -84,7 +77,6 @@ bot.command('tip', async (ctx) => {
             ctx.reply(err)
          })
        
-          //ctx.replyWithPhoto(`https://api.qrserver.com/v1/create-qr-code/?data=${response}%0A&size=142x142&margin=0`)
 
          
       } else {
@@ -113,7 +105,7 @@ bot.action("send_qr_code", (ctx) => {
 bot.on('sticker', (ctx) =>
    ctx.reply('👍'))
 
-   bot.on('mention', (ctx) =>
+bot.on('mention', (ctx) =>
    ctx.reply('👍'))
 
 //Greetings/////////////////
@@ -124,5 +116,10 @@ bot.hears('Hi', (ctx) =>
    ctx.reply('Hey there'))
 bot.hears('Hey', (ctx) =>
    ctx.reply('Hey there'))
+bot.hears('source', (ctx) =>
+   ctx.reply(`GitHub:`, Extra.HTML().markup((m) =>
+   m.inlineKeyboard([
+      m.urlButton('Source', 'https://github.com/trusty-code/tipbot-telegram'),
+   ]))))
 
 bot.launch()
