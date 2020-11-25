@@ -21,4 +21,4 @@ People can donate to people, which are registered within the system. The registe
 
 ## Invite to the bot
 
-https://t.me/IotaTrustifyBot
+https://t.me/IOTA_TipBot
