@@ -8,10 +8,30 @@ People can donate to people, which are registered within the system. The registe
 
 ### The donation bot will be available for Discord and Telegram.
 
+## commands Telegram:
+adding your address to the backend (only in private):
+> /add < address > 
+
+link to the Repo (only in Private):
+> /source
+
+tip to a User (a Username is required!):
+> /tip @Username
+
+change your address:
+> /add < new address >
+
+## commands Discord:
+adding your address to the backend (only in private):
+> !add < address > 
+
+tip to a User (a Username is required!):
+> !tip @Username
+
+change your address:
+> !add < new address >
 
 ## requirements:
-
-> @iota/core
 
 > node-telegram-bot-api
 
