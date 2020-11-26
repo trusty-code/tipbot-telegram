@@ -22,7 +22,6 @@ const bot = new Telegraf(BOT_TOKEN)
 const telegram = new Telegram(BOT_TOKEN, {})
 
 
-
 trustify.setDB(`postgresql://${DB_USER}:${DB_PASSWORD}@${DB_URL}:${DB_PORT}/${DB_NAME}`)
 
 
@@ -59,26 +58,22 @@ bot.command('tip', async (ctx) => {
    console.log("user", user)
 
    trustify.tip(user).then((response) => {
-      console.log("ctx.message.from", ctx.message)
       if (response) {
 
-         TinyURL.shorten(`iota://${response}/$amout=1&message=Trustify_tip`).then(function (res) {
-            ctx.reply(`<b>Tip to ${user}:</b>`,Extra.HTML())
-            setTimeout(() =>  {
-            ctx.reply(`${response}`, Extra.HTML().markup((m) =>
+         let message = `<pre>` + response + `</pre> \nTip to: @${user}`
+
+         TinyURL.shorten(`iota://${response}/?amount=1`).then(function (res) {
+           
+            ctx.reply(message, Extra.HTML().markup((m) =>
             m.inlineKeyboard([
                m.callbackButton('Show QR Code', 'send_qr_code'),
                m.urlButton('Trinity', res),
-            ])))},100);
-
-         // ctx.reply(`${response}`)
+            ])))
 
          }, function (err) {
             ctx.reply(err)
          })
        
-
-         
       } else {
          ctx.reply(`@${user} didn't provide a IOTA address.`)
       }
@@ -87,36 +82,22 @@ bot.command('tip', async (ctx) => {
 
 bot.action("send_qr_code", (ctx) => {
 
-   // this only works, because on the text is just the address
-   let address = ctx.update.callback_query.message.text
+   let messsage = ctx.update.callback_query.message.text
 
+   let address = messsage.substring(0, 90)
+   let tip_text = messsage.substring(92)
+   
    let user_id = ctx.update.callback_query.from.id
 
-   telegram.sendPhoto(user_id, `https://api.qrserver.com/v1/create-qr-code/?data=${address}`).then(res =>  {
+   telegram.sendPhoto(user_id, `https://api.qrserver.com/v1/create-qr-code/?data=${address}/?amount=1`, {caption: `${tip_text}`}).then(res =>  {
       console.log("sendMessage", res)
    })
    
-   return ctx.answerCbQuery(`send_qr_code`)
+   return ctx.answerCbQuery(`Private message sent.`)
 })
 
 
-
-
-bot.on('sticker', (ctx) =>
-   ctx.reply('👍'))
-
-bot.on('mention', (ctx) =>
-   ctx.reply('👍'))
-
-//Greetings/////////////////
-
-bot.hears('hi', (ctx) =>
-   ctx.reply('Hey there'))
-bot.hears('Hi', (ctx) =>
-   ctx.reply('Hey there'))
-bot.hears('Hey', (ctx) =>
-   ctx.reply('Hey there'))
-bot.hears('source', (ctx) =>
+bot.command('source', (ctx) =>
    ctx.reply(`GitHub:`, Extra.HTML().markup((m) =>
    m.inlineKeyboard([
       m.urlButton('Source', 'https://github.com/trusty-code/tipbot-telegram'),
