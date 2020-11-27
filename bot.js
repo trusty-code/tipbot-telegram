@@ -60,7 +60,7 @@ bot.command('tip', async (ctx) => {
    trustify.tip(user).then((response) => {
       if (response) {
 
-         let message = `<pre>` + response + `</pre> \nTip to: @${user}`
+         let message = `<pre>` + response + `</pre> \nTip to: ${user}`
 
          TinyURL.shorten(`iota://${response}/?amount=1`).then(function (res) {
            
