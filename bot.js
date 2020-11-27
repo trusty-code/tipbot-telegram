@@ -89,7 +89,7 @@ bot.action("send_qr_code", (ctx) => {
    
    let user_id = ctx.update.callback_query.from.id
 
-   telegram.sendPhoto(user_id, `https://api.qrserver.com/v1/create-qr-code/?data=${address}/?amount=1`, {caption: `${tip_text}`}).then(res =>  {
+   telegram.sendPhoto(user_id, `https://api.qrserver.com/v1/create-qr-code/?data=${address}/?amount=1&message=TipBot_tip`, {caption: `${tip_text}`}).then(res =>  {
       console.log("sendMessage", res)
    })
    
