@@ -21,108 +21,102 @@ const DB_NAME = process.env.DB_NAME
 const bot = new Telegraf(BOT_TOKEN)
 const telegram = new Telegram(BOT_TOKEN, {})
 
+const addaddr = `Address added.`
+const invalidaddr = `Error - Probably not a valid IOTA address`
 
 trustify.setDB(`postgresql://${DB_USER}:${DB_PASSWORD}@${DB_URL}:${DB_PORT}/${DB_NAME}`)
 
 
 bot.start((ctx) =>
-   ctx.reply('Hi! I\'m the IOTA TipBot! \r\nType /help to see a list of available commands. First you ned to set a valid donation adress with /add.'))
+   ctx.reply('Hi! I\'m the IOTA TipBot! \r\nType /help to see a list of available commands. First, you need to set a valid donation address with /add <your address>.'))
 
 bot.help((ctx) =>
-   ctx.reply('/help - some useful tips to this bot \r\n/add - set your IOTA receiving address \r\n/tip - tip to a User'))
+   ctx.reply('/start - to start using the bot and receive qr-codes \r\n/help - some useful tips to this bot \r\n/add - set your IOTA receiving address \r\n/tip - tip to a User'))
 
-//Not ready yet
-bot.command('add', (ctx) => {
-   ctx.reply('Enter a valid IOTA address to receive your tips:')
-   bot.on('message', (ctx) => {
-      if ('message') {
-         let user = ctx.message.from.username
-         let address = ctx.message.text
-         let response = trustify.add(user, address)
-         return ctx.reply(response)
-      }
-
-      else ('message')
-      return ctx.reply('invalid IOTA address, please try again!')
-
-   })
+bot.hears(/^!add|^\/add/i, async (ctx) => {
+   let user = ctx.message.from.username
+   let address = ctx.message.text.slice(5)
+   let response = trustify.add(user, address)
+   if (response !== invalidaddr) {
+        if (response !== addaddr) {
+            ctx.reply(response)
+        } else {
+            ctx.reply(`${user} successfully added a new IOTA address!`)
+        }
+   } else {
+     ctx.reply('Invalid IOTA address, please try again with:<pre>/add IOTAADDRESS</pre>',Extra.HTML())
+   }
 })
 
-bot.command('tip', async (ctx) => {
-   if(!ctx.message.entities[1]) {
-      ctx.reply("Usage with /tip @username")
-      return
-   }
-   if(!ctx.message.entities[1].type == "mention") {
-      ctx.reply("Usage with /tip @user_name")
-      return
-   }
-   // Example text: '/tip @Neupi'
-   let text = ctx.message.text
-   let offset = ctx.message.entities[1].offset
-   let length = ctx.message.entities[1].length
-   // offset + 1 removes the "@"
-   var user = text.substring(offset + 1, offset + length);
-   console.log("user", user)
-
-   trustify.tip(user).then((response) => {
-      console.log("ctx.message.from", ctx.message)
-      if (response) {
-
-         TinyURL.shorten(`iota://${response}/$amout=1&message=Trustify_tip`).then(function (res) {
-            ctx.reply(`<b>Tip to ${user}:</b>`,Extra.HTML())
-            setTimeout(() =>  {
-            ctx.reply(`${response}`, Extra.HTML().markup((m) =>
-            m.inlineKeyboard([
-               m.callbackButton('Show QR Code', 'send_qr_code'),
-               m.urlButton('Trinity', res),
-            ])))},100);
-
-         // ctx.reply(`${response}`)
-
-         }, function (err) {
-            ctx.reply(err)
-         })
-       
-          //ctx.replyWithPhoto(`https://api.qrserver.com/v1/create-qr-code/?data=${response}%0A&size=142x142&margin=0`)
-
-         
+bot.hears(/^!tip|^\/tip/i, async (ctx) => {
+   var checkreply = ctx.message.reply_to_message
+   if (checkreply === undefined) {
+      let getmsg = ctx.message.text
+      let checkuser = getmsg.substring(5, 6)
+      if(checkuser !== `@`) {
+         ctx.reply("Please use the command as a reply or use /tip @username!")
+         return
       } else {
-         ctx.reply(`@${user} didn't provide a IOTA address.`)
+         var user = getmsg.substring(6)
       }
-   })
+   } else {
+      var user = ctx.message.reply_to_message.from.username
+   }
+
+   if (user !== undefined) {
+      trustify.tip(user).then((response) => {
+
+         if (response) {
+
+            let message = `<pre>` + response + `</pre>\n\nTip to: @${user}`
+
+            TinyURL.shorten(`iota://${response}/?message=Tipped with Telegram @IOTA_TipBot`).then(function (res) {
+
+               ctx.reply(message, Extra.HTML().markup((m) =>
+               m.inlineKeyboard([
+                  m.callbackButton('Show QR Code', 'send_qr_code'),
+
+                  m.urlButton('Trinity', res),
+               ])))
+
+            }, function (err) {
+               ctx.reply(err)
+            })
+
+         } else {
+            ctx.reply(`@${user} does not have a IOTA tip address.`)
+         }
+      })
+   } else if (checkreply !== undefined) {
+      var firstname = ctx.message.reply_to_message.from.first_name
+      ctx.reply(`${firstname} does not have a username.`)
+   } else {
+      ctx.reply(`Please use the tip command as a reply or tag a user.`)
+   }
 })
 
 bot.action("send_qr_code", (ctx) => {
 
-   // this only works, because on the text is just the address
-   let address = ctx.update.callback_query.message.text
+   let message = ctx.update.callback_query.message.text
+
+   let address = message.substring(0, 90)
+   let tip_text = message.substring(91, 99)
+   let username = message.substring(100)
 
    let user_id = ctx.update.callback_query.from.id
 
-   telegram.sendPhoto(user_id, `https://api.qrserver.com/v1/create-qr-code/?data=${address}`).then(res =>  {
+   telegram.sendPhoto(user_id, `https://api.qrserver.com/v1/create-qr-code/?data=${address}`, {caption: `${tip_text} @${username}`}).then(res =>  {
       console.log("sendMessage", res)
    })
-   
-   return ctx.answerCbQuery(`send_qr_code`)
+
+   return ctx.answerCbQuery(`Private message sent.`)
 })
 
 
-
-
-bot.on('sticker', (ctx) =>
-   ctx.reply('👍'))
-
-   bot.on('mention', (ctx) =>
-   ctx.reply('👍'))
-
-//Greetings/////////////////
-
-bot.hears('hi', (ctx) =>
-   ctx.reply('Hey there'))
-bot.hears('Hi', (ctx) =>
-   ctx.reply('Hey there'))
-bot.hears('Hey', (ctx) =>
-   ctx.reply('Hey there'))
+bot.command('source', (ctx) =>
+   ctx.reply(`GitHub:`, Extra.HTML().markup((m) =>
+   m.inlineKeyboard([
+      m.urlButton('Source', 'https://github.com/trusty-code/tipbot-telegram'),
+   ]))))
 
 bot.launch()
