@@ -26,7 +26,6 @@ const invalidaddr = `Error - Probably not a valid IOTA address`
 
 trustify.setDB(`postgresql://${DB_USER}:${DB_PASSWORD}@${DB_URL}:${DB_PORT}/${DB_NAME}`)
 
-
 bot.start((ctx) =>
    ctx.reply('Hi! I\'m the IOTA TipBot! \r\nType /help to see a list of available commands. First, you need to set a valid donation address with /add <your address>.'))
 
@@ -96,7 +95,6 @@ bot.hears(/^!tip|^\/tip/i, async (ctx) => {
 })
 
 bot.action("send_qr_code", (ctx) => {
-
    let message = ctx.update.callback_query.message.text
 
    let address = message.substring(0, 90)
@@ -104,14 +102,12 @@ bot.action("send_qr_code", (ctx) => {
    let username = message.substring(100)
 
    let user_id = ctx.update.callback_query.from.id
-
+   
    telegram.sendPhoto(user_id, `https://api.qrserver.com/v1/create-qr-code/?data=${address}`, {caption: `${tip_text} @${username}`}).then(res =>  {
       console.log("sendMessage", res)
    })
-
    return ctx.answerCbQuery(`Private message sent.`)
 })
-
 
 bot.command('source', (ctx) =>
    ctx.reply(`GitHub:`, Extra.HTML().markup((m) =>
