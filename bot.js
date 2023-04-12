@@ -22,7 +22,7 @@ const bot = new Telegraf(BOT_TOKEN)
 const telegram = new Telegram(BOT_TOKEN, {})
 
 const addaddr = `Address added.`
-const invalidaddr = `Error - Probably not a valid IOTA address`
+const invalidaddr = `Error - Address is missing or not valid.`
 
 trustify.setDB(`postgresql://${DB_USER}:${DB_PASSWORD}@${DB_URL}:${DB_PORT}/${DB_NAME}`)
 
@@ -36,14 +36,13 @@ bot.hears(/^!add|^\/add/i, async (ctx) => {
    let user = ctx.message.from.username
    let address = ctx.message.text.slice(5)
    let response = trustify.add(user, address)
-   if (response !== invalidaddr) {
-        if (response !== addaddr) {
-            ctx.reply(response)
-        } else {
-            ctx.reply(`${user} successfully added a new IOTA address!`)
-        }
+
+   if (response === addaddr) {
+      ctx.reply(`${user} successfully added a new IOTA address!`);
+   } else if (response === invalidaddr) {
+      ctx.reply('Invalid IOTA address, please try again with:<pre>/add IOTAADDRESS</pre>', Extra.HTML());
    } else {
-     ctx.reply('Invalid IOTA address, please try again with:<pre>/add IOTAADDRESS</pre>',Extra.HTML())
+      ctx.reply(response);
    }
 })
 
